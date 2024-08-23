@@ -1,49 +1,123 @@
-# Project: Natural Language to ABAC Policy Conversion
+### **1. Project Goal and Concept**
+The objective is to **convert natural language access control policies** (e.g., "The driver can update the car's software when the vehicle is stationary") into **executable XACML (eXtensible Access Control Markup Language) ABAC (Attribute-Based Access Control) policies**. The challenge is ensuring that natural language policies are correctly interpreted, translated, and executed as formal policies.
 
-## Overview
-This project aims to bridge the gap between natural language policy definitions and their implementation in digital access control systems using Attribute-Based Access Control (ABAC). By leveraging natural language processing (NLP) techniques, the project automates the conversion of textual policy descriptions into structured digital formats compatible with ABAC systems.
+### **2. Domain Context: Connected Car Ecosystem**
+We are focusing on access control policies within a **connected car ecosystem**. This involves subjects (e.g., drivers, passengers), actions (e.g., update, control), resources (e.g., vehicle data, software), and conditions (e.g., car status, network connectivity).
 
-## Objective
-- **Primary Goal**: Automate the translation of natural language access control policies into digital policies for ABAC systems.
-- **Secondary Goals**:
-  - Improve the accuracy and efficiency of policy translation.
-  - Provide a user-friendly interface for non-technical stakeholders to define access control rules.
+#### **Example Policy:**
+*"Only the driver can update the vehicle software when parked and connected to a secure network."*
 
-## Methodology
+### **3. Key Components for the Solution**
 
-### 1. Natural Language Processing (NLP)
-Using the spaCy library, the project processes and analyzes natural language to extract relevant entities, actions, and conditions that dictate access control.
+#### **Natural Language Taxonomy:**
+To translate natural language into executable policies, we must first define a clear **taxonomy** that structures natural language elements:
+- **Subjects**: Who is requesting access (e.g., Driver, Mechanic).
+- **Actions**: What is being performed (e.g., Update, View).
+- **Resources**: What is being accessed (e.g., Software, Vehicle data).
+- **Conditions**: Contextual rules (e.g., Time, Location, Speed, Connectivity).
 
-#### Tools and Technologies
-- **spaCy**: A powerful Python library for advanced natural language processing.
-- **Python**: The primary programming language used for the project.
+#### **NLP Component:**
+An NLP tool is required to extract these components from natural language policies. This allows for structured extraction of subjects, actions, resources, and conditions. 
 
-### 2. Policy Rule Construction
-Based on the extracted data, policy rules are constructed which outline who can perform what actions under which conditions.
+**Key Steps:**
+1. **Text parsing and tokenization** to break down natural language into meaningful chunks.
+2. **Named Entity Recognition (NER)** for identifying roles, actions, and conditions.
+3. **Grammar definition** to ensure policies are expressed in a structured way (e.g., Subject → Action → Resource → Condition).
 
-### 3. Integration with ABAC Systems
-The structured rules are then formatted to be compatible with ABAC systems such as Py-ABAC or Vakt.
+**Libraries:** SpaCy, NLTK, or Hugging Face Transformers for parsing and extracting these elements.
 
-### 4. User Interface
-A simple web interface allows stakeholders to input policies in natural language and view the converted ABAC rules.
+#### **Policy Representation:**
+Once the taxonomy is extracted, we need to map it into **formal policies**:
+- **XACML structure**: XACML policies consist of `<Subject>`, `<Action>`, `<Resource>`, and `<Environment>`. The parsed natural language policies are mapped into these XML-based policy elements.
 
-## System Architecture
+### **4. Tools & Libraries**
 
-### Components
-1. **NLP Module**: Parses and interprets natural language to identify key elements of access control policies.
-2. **Policy Management Module**: Converts parsed data into ABAC-compliant policy rules.
-3. **ABAC Engine**: Uses Py-ABAC or Vakt to enforce the policies.
-4. **User Interface**: Web-based platform for entering and managing policies.
+#### **Vakt SDK**:
+We’ve identified **Vakt**, a Python-based ABAC SDK that allows you to define access control policies programmatically. It uses attributes for defining policies and inquiries to check if a request adheres to the defined policies.
 
-### Data Flow
-1. **Input**: User inputs a policy in natural language.
-2. **Processing**: The NLP module processes the text and extracts relevant data.
-3. **Conversion**: The Policy Management Module converts the data into ABAC policies.
-4. **Output**: The ABAC engine uses these policies to make access decisions.
+- **Policy Creation**: Policies are created using attributes such as action, resource, subject, and context.
+- **Inquiry Mechanism**: Inquiries represent access requests, which Vakt evaluates against stored policies.
+- **Storage**: Policies can be stored in memory or more advanced backends (e.g., MongoDB), making it scalable for real-world applications.
 
-## Installation
+**Example with Vakt SDK:**
+```python
+from vakt import Policy, ALLOW_ACCESS
+from vakt.rules import Eq, CIDR
 
-```bash
-pip install spacy
-python -m spacy download en_core_web_sm
-pip install py_abac vakt
+policy = Policy(
+    1,
+    actions=[Eq('update')],
+    resources=[{'type': 'software'}],
+    subjects=[{'role': 'driver'}],
+    context={'location': CIDR('192.168.1.0/24')}
+)
+```
+
+### **5. Example Flow (End-to-End Process)**
+#### **Step 1: Natural Language Input**
+A policy in natural language: *“The driver can control the vehicle only when it is stationary and connected to a secure network.”*
+
+#### **Step 2: NLP Parsing**
+Using an NLP library, we extract:
+- **Subject**: Driver
+- **Action**: Control
+- **Resource**: Vehicle
+- **Condition**: Stationary and connected to a secure network.
+
+#### **Step 3: Policy Mapping**
+The extracted components are then mapped into an **XACML policy**:
+```xml
+<Policy>
+  <Target>
+    <Subjects>
+      <Subject>Driver</Subject>
+    </Subjects>
+    <Resources>
+      <Resource>Vehicle</Resource>
+    </Resources>
+    <Actions>
+      <Action>Control</Action>
+    </Actions>
+    <Environments>
+      <Environment>Vehicle is stationary</Environment>
+      <Environment>Connected to secure network</Environment>
+    </Environments>
+  </Target>
+  <Rule Effect="Permit">
+    <Condition>
+      <Apply FunctionId="vehicleIsStationary"/>
+      <Apply FunctionId="networkIsSecure"/>
+    </Condition>
+  </Rule>
+</Policy>
+```
+
+#### **Step 4: Execution Using Vakt**
+Using the Vakt SDK, we could implement this rule and test whether specific inquiries (e.g., "Driver wants to control the vehicle while parked") are allowed.
+
+```python
+from vakt import Inquiry
+
+inquiry = Inquiry(
+    subject={'role': 'driver'},
+    action='control',
+    resource='vehicle',
+    context={'location': 'stationary', 'network': 'secure'}
+)
+
+if guard.is_allowed(inquiry):
+    print("Access Granted")
+else:
+    print("Access Denied")
+```
+
+### **6. Challenges & Next Steps**
+- **Grammar Creation**: You need to create a structured grammar that standardizes how policies are written, making NLP parsing easier.
+- **Mapping Rules**: Ensure all extracted components from the NLP system map correctly into XACML and Vakt policies.
+- **Edge Cases**: Handling complex conditions and nested policies (e.g., *"The driver can control the vehicle if the passenger has not overridden the settings."*).
+
+### **Next Steps:**
+1. **Choose an NLP library** (SpaCy, NLTK, or Hugging Face) for entity extraction.
+2. **Define the grammar** for the natural language policies to ensure consistency in structure.
+3. **Implement policy mapping** from natural language to XACML using the Vakt SDK for ABAC enforcement.
+4. **Test with real-world examples** from the connected car domain and refine the translation process.
