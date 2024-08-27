@@ -1,0 +1,22 @@
+body {
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    width: 60%;
+    margin: auto;
+}
+
+textarea {
+    width: 100%;
+}
+
+pre {
+    background-color: #f4f4f4;
+    padding: 10px;
+    border: 1px solid #ddd;
+}
+
+button {
+    margin: 5px;
+}

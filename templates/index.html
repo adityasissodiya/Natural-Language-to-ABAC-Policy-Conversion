@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Policy Converter</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Natural Language to XACML Policy Converter</h1>
+        <form id="policyForm">
+            <textarea id="policyInput" name="policy_text" rows="5" cols="50" placeholder="Enter natural language policy..."></textarea>
+            <br><br>
+            <button type="submit">Process</button>
+            <button type="reset">Clear</button>
+        </form>
+        <br>
+        <div id="results">
+            <h3>Extracted Entities:</h3>
+            <pre id="entities"></pre>
+            <h3>Generated XACML Policy:</h3>
+            <pre id="xacml_policy"></pre>
+            <h3>Enforcement Result:</h3>
+            <pre id="enforcement"></pre>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $('#policyForm').on('submit', function(event) {
+            event.preventDefault();
+            let formData = $(this).serialize();
+            $.post('/process_policy', formData, function(response) {
+                $('#entities').text(JSON.stringify(response.entities, null, 2));
+                $('#xacml_policy').text(response.xacml_policy);
+                $('#enforcement').text(response.enforcement);
+            });
+        });
+    </script>
+</body>
+</html>
