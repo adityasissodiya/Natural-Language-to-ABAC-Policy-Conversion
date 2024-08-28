@@ -1,6 +1,6 @@
 # Natural-Language-to-ABAC-Policy-Conversion
 
-![alt text](https://github.com/adityasissodiya/Natural-Language-to-ABAC-Policy-Conversion/nLTXPC.png)
+![alt text](https://github.com/adityasissodiya/Natural-Language-to-ABAC-Policy-Conversion/blob/main/nLTXPC.png)
 
 ## Table of Contents
 - [Project Overview](#project-overview)
