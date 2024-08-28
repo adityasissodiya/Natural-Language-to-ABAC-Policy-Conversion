@@ -1,8 +1,6 @@
-Certainly! Below is a comprehensive `README.md` for your project, which explains the project, how to set it up, and how to run it, especially with Docker.
-
----
-
 # Natural-Language-to-ABAC-Policy-Conversion
+
+![alt text](https://github.com/adityasissodiya/Natural-Language-to-ABAC-Policy-Conversion/nLTXPC.png)
 
 ## Table of Contents
 - [Project Overview](#project-overview)
@@ -161,15 +159,4 @@ If you'd like to run the project locally without Docker, follow these steps:
    - Simulate enforcement of the policy.
 
 4. **View the Results**: The extracted entities, generated XACML policy, and enforcement result ("Access Granted" or "Access Denied") will be displayed below the form.
-
-## Future Enhancements
-- **Support for more complex NLP processing**: Enhance the NLP model to handle more complex policy texts.
-- **Multiple Policy Support**: Allow the processing of multiple policies at once.
-- **XACML Export**: Add an option to export the generated XACML policies to a file.
-- **Production Deployment**: Set up a production environment with `gunicorn` and an appropriate reverse proxy.
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
 ---
