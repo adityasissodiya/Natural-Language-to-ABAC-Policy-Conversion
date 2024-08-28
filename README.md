@@ -1,123 +1,175 @@
-### **1. Project Goal and Concept**
-The objective is to **convert natural language access control policies** (e.g., "The driver can update the car's software when the vehicle is stationary") into **executable XACML (eXtensible Access Control Markup Language) ABAC (Attribute-Based Access Control) policies**. The challenge is ensuring that natural language policies are correctly interpreted, translated, and executed as formal policies.
+Certainly! Below is a comprehensive `README.md` for your project, which explains the project, how to set it up, and how to run it, especially with Docker.
 
-### **2. Domain Context: Connected Car Ecosystem**
-We are focusing on access control policies within a **connected car ecosystem**. This involves subjects (e.g., drivers, passengers), actions (e.g., update, control), resources (e.g., vehicle data, software), and conditions (e.g., car status, network connectivity).
+---
 
-#### **Example Policy:**
-*"Only the driver can update the vehicle software when parked and connected to a secure network."*
+# Natural-Language-to-ABAC-Policy-Conversion
 
-### **3. Key Components for the Solution**
+## Table of Contents
+- [Project Overview](#project-overview)
+- [Features](#features)
+- [Technologies Used](#technologies-used)
+- [Project Structure](#project-structure)
+- [Setup Instructions](#setup-instructions)
+  - [Pre-requisites](#pre-requisites)
+  - [Running the Application with Docker](#running-the-application-with-docker)
+  - [Alternative: Running Locally (Without Docker)](#alternative-running-locally-without-docker)
+- [How to Use](#how-to-use)
+- [Future Enhancements](#future-enhancements)
+- [License](#license)
 
-#### **Natural Language Taxonomy:**
-To translate natural language into executable policies, we must first define a clear **taxonomy** that structures natural language elements:
-- **Subjects**: Who is requesting access (e.g., Driver, Mechanic).
-- **Actions**: What is being performed (e.g., Update, View).
-- **Resources**: What is being accessed (e.g., Software, Vehicle data).
-- **Conditions**: Contextual rules (e.g., Time, Location, Speed, Connectivity).
+## Project Overview
 
-#### **NLP Component:**
-An NLP tool is required to extract these components from natural language policies. This allows for structured extraction of subjects, actions, resources, and conditions. 
+This project converts natural language policy descriptions into **Attribute-Based Access Control (ABAC)** policies. ABAC is a highly flexible and scalable method to control access to resources based on attributes (like subject, action, resource, and environmental conditions).
 
-**Key Steps:**
-1. **Text parsing and tokenization** to break down natural language into meaningful chunks.
-2. **Named Entity Recognition (NER)** for identifying roles, actions, and conditions.
-3. **Grammar definition** to ensure policies are expressed in a structured way (e.g., Subject → Action → Resource → Condition).
+The project processes the natural language policy input using **spaCy** for Natural Language Processing (NLP), extracts relevant entities, and generates an **XACML**-style policy. The policies can then be enforced using the **vakt** library.
 
-**Libraries:** SpaCy, NLTK, or Hugging Face Transformers for parsing and extracting these elements.
+### Main Workflow
+1. **Input**: Natural language text that describes an access control policy.
+2. **NLP**: The policy text is processed to extract subjects, actions, resources, and conditions.
+3. **XACML Policy**: The extracted entities are used to generate a policy in XACML format.
+4. **Enforcement**: The policy is checked using the vakt library to determine if the given conditions allow or deny access.
 
-#### **Policy Representation:**
-Once the taxonomy is extracted, we need to map it into **formal policies**:
-- **XACML structure**: XACML policies consist of `<Subject>`, `<Action>`, `<Resource>`, and `<Environment>`. The parsed natural language policies are mapped into these XML-based policy elements.
+## Features
+- Process natural language input and extract ABAC entities (subjects, actions, resources, conditions).
+- Convert the extracted entities into XACML policy.
+- Enforce the policy to determine if access should be granted or denied.
+- Web interface to input policies and view results.
 
-### **4. Tools & Libraries**
+## Technologies Used
+- **Flask**: Web framework used for the backend.
+- **spaCy**: For Natural Language Processing to extract entities.
+- **vakt**: For enforcing ABAC policies.
+- **Docker**: For containerizing the application, ensuring easy setup and consistent environments.
+- **lxml**: For generating XACML policies in XML format.
 
-#### **Vakt SDK**:
-We’ve identified **Vakt**, a Python-based ABAC SDK that allows you to define access control policies programmatically. It uses attributes for defining policies and inquiries to check if a request adheres to the defined policies.
-
-- **Policy Creation**: Policies are created using attributes such as action, resource, subject, and context.
-- **Inquiry Mechanism**: Inquiries represent access requests, which Vakt evaluates against stored policies.
-- **Storage**: Policies can be stored in memory or more advanced backends (e.g., MongoDB), making it scalable for real-world applications.
-
-**Example with Vakt SDK:**
-```python
-from vakt import Policy, ALLOW_ACCESS
-from vakt.rules import Eq, CIDR
-
-policy = Policy(
-    1,
-    actions=[Eq('update')],
-    resources=[{'type': 'software'}],
-    subjects=[{'role': 'driver'}],
-    context={'location': CIDR('192.168.1.0/24')}
-)
+## Project Structure
+```
+Natural-Language-to-ABAC-Policy-Conversion/
+│
+├── app/
+│   ├── __init__.py              # Flask app initialization
+│   ├── nlp_processing.py        # NLP processing with spaCy
+│   ├── routes.py                # Defines routes for the web app
+│   ├── static/
+│   │   └── style.css            # CSS for the web interface
+│   ├── templates/
+│   │   └── index.html           # HTML page for input/output display
+│   └── vakt_integration.py      # Handles ABAC policy enforcement with vakt
+│
+├── app.py                       # Entry point for the Flask application
+├── docker-compose.yml           # Docker Compose configuration file
+├── Dockerfile                   # Dockerfile for building the Docker image
+├── requirements.txt             # Python dependencies
+├── README.md                    # Project documentation
+└── __pycache__/                 # Cached Python files (ignored)
 ```
 
-### **5. Example Flow (End-to-End Process)**
-#### **Step 1: Natural Language Input**
-A policy in natural language: *“The driver can control the vehicle only when it is stationary and connected to a secure network.”*
+## Setup Instructions
 
-#### **Step 2: NLP Parsing**
-Using an NLP library, we extract:
-- **Subject**: Driver
-- **Action**: Control
-- **Resource**: Vehicle
-- **Condition**: Stationary and connected to a secure network.
+### Pre-requisites
+Ensure you have the following installed on your machine:
+- **Docker**: Install from [here](https://docs.docker.com/get-docker/).
+- **Docker Compose**: Install from [here](https://docs.docker.com/compose/install/).
 
-#### **Step 3: Policy Mapping**
-The extracted components are then mapped into an **XACML policy**:
-```xml
-<Policy>
-  <Target>
-    <Subjects>
-      <Subject>Driver</Subject>
-    </Subjects>
-    <Resources>
-      <Resource>Vehicle</Resource>
-    </Resources>
-    <Actions>
-      <Action>Control</Action>
-    </Actions>
-    <Environments>
-      <Environment>Vehicle is stationary</Environment>
-      <Environment>Connected to secure network</Environment>
-    </Environments>
-  </Target>
-  <Rule Effect="Permit">
-    <Condition>
-      <Apply FunctionId="vehicleIsStationary"/>
-      <Apply FunctionId="networkIsSecure"/>
-    </Condition>
-  </Rule>
-</Policy>
-```
+### Running the Application with Docker
 
-#### **Step 4: Execution Using Vakt**
-Using the Vakt SDK, we could implement this rule and test whether specific inquiries (e.g., "Driver wants to control the vehicle while parked") are allowed.
+To run the project in a Docker container, follow these steps:
 
-```python
-from vakt import Inquiry
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/your-username/Natural-Language-to-ABAC-Policy-Conversion.git
+   cd Natural-Language-to-ABAC-Policy-Conversion
+   ```
 
-inquiry = Inquiry(
-    subject={'role': 'driver'},
-    action='control',
-    resource='vehicle',
-    context={'location': 'stationary', 'network': 'secure'}
-)
+2. **Build the Docker Image**:
+   Docker Compose will use the provided `Dockerfile` to build the image.
+   ```bash
+   docker-compose build
+   ```
 
-if guard.is_allowed(inquiry):
-    print("Access Granted")
-else:
-    print("Access Denied")
-```
+3. **Run the Application**:
+   Once the image is built, start the application with Docker Compose:
+   ```bash
+   docker-compose up
+   ```
 
-### **6. Challenges & Next Steps**
-- **Grammar Creation**: You need to create a structured grammar that standardizes how policies are written, making NLP parsing easier.
-- **Mapping Rules**: Ensure all extracted components from the NLP system map correctly into XACML and Vakt policies.
-- **Edge Cases**: Handling complex conditions and nested policies (e.g., *"The driver can control the vehicle if the passenger has not overridden the settings."*).
+4. **Access the Application**:
+   Open your web browser and navigate to:
+   ```
+   http://127.0.0.1:5000
+   ```
 
-### **Next Steps:**
-1. **Choose an NLP library** (SpaCy, NLTK, or Hugging Face) for entity extraction.
-2. **Define the grammar** for the natural language policies to ensure consistency in structure.
-3. **Implement policy mapping** from natural language to XACML using the Vakt SDK for ABAC enforcement.
-4. **Test with real-world examples** from the connected car domain and refine the translation process.
+5. **Stop the Application**:
+   When you're done, stop the containers by pressing `Ctrl+C` or running:
+   ```bash
+   docker-compose down
+   ```
+
+### Alternative: Running Locally (Without Docker)
+
+If you'd like to run the project locally without Docker, follow these steps:
+
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/your-username/Natural-Language-to-ABAC-Policy-Conversion.git
+   cd Natural-Language-to-ABAC-Policy-Conversion
+   ```
+
+2. **Create a Virtual Environment**:
+   Create a virtual environment to manage dependencies:
+   ```bash
+   python3 -m venv env
+   source env/bin/activate  # On Windows: env\Scripts\activate
+   ```
+
+3. **Install Dependencies**:
+   Install all required Python packages:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Download spaCy Model**:
+   Download the spaCy English model required for NLP:
+   ```bash
+   python -m spacy download en_core_web_sm
+   ```
+
+5. **Run the Application**:
+   Run the Flask app locally:
+   ```bash
+   python app.py
+   ```
+
+6. **Access the Application**:
+   Open your web browser and navigate to:
+   ```
+   http://127.0.0.1:5000
+   ```
+
+## How to Use
+
+1. **Open the Web Interface**: Once the application is running, go to `http://127.0.0.1:5000`.
+   
+2. **Enter a Policy**: In the input box, enter a natural language policy like:
+   ```
+   Alice can read the document if she is an employee.
+   ```
+
+3. **Process the Policy**: Click on the "Process" button. The application will:
+   - Extract entities (subject, action, resource, and condition).
+   - Generate a corresponding XACML policy.
+   - Simulate enforcement of the policy.
+
+4. **View the Results**: The extracted entities, generated XACML policy, and enforcement result ("Access Granted" or "Access Denied") will be displayed below the form.
+
+## Future Enhancements
+- **Support for more complex NLP processing**: Enhance the NLP model to handle more complex policy texts.
+- **Multiple Policy Support**: Allow the processing of multiple policies at once.
+- **XACML Export**: Add an option to export the generated XACML policies to a file.
+- **Production Deployment**: Set up a production environment with `gunicorn` and an appropriate reverse proxy.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+---
